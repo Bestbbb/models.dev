@@ -1,27 +1,24 @@
 name: Issue Fixer
 
+# Maintainer-opened issues only. Models the sync finds go through Fill Catalog Gap instead (see sync.md).
 on:
   issues:
     types: [opened, labeled]
-  repository_dispatch:
-    types: [missing-model]
 
 permissions:
   contents: write
   issues: write
   pull-requests: write
 
-concurrency: issue-fixer-${{ github.event.issue.number || github.event.client_payload.issue_number }}
+concurrency: issue-fixer-${{ github.event.issue.number }}
 
 jobs:
   fix:
     if: >-
       github.repository == 'anomalyco/models.dev'
       && !contains(github.event.issue.labels.*.name, 'provider:openai')
-      && github.event.client_payload.provider != 'openai'
       && (
-        github.event_name == 'repository_dispatch'
-        || (github.event.action == 'opened' && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
+        (github.event.action == 'opened' && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
         || (github.event.action == 'labeled' && github.event.label.name == 'fixer:run')
       )
     runs-on: ubuntu-latest
@@ -33,7 +30,7 @@ jobs:
       id-token: write
     env:
       GH_TOKEN: ${{ github.token }}
-      ISSUE_NUMBER: ${{ github.event.issue.number || github.event.client_payload.issue_number }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
 
     steps:
       - name: Checkout code
@@ -107,7 +104,7 @@ jobs:
       - name: Create pull request
         if: success()
         env:
-          BRANCH: issue-${{ github.event.issue.number || github.event.client_payload.issue_number }}
+          BRANCH: issue-${{ github.event.issue.number }}
         run: |
           set -euo pipefail
           ISSUE_TITLE="$(jq -r .title "$ISSUE_FILE")"
