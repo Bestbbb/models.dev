@@ -32,7 +32,6 @@ jobs:
       changed: ${{ steps.changes.outputs.changed }}
     env:
       ISSUE_NUMBER: ${{ github.event.issue.number }}
-      OUT: ${{ runner.temp }}/fix
 
     steps:
       - name: Checkout code
@@ -46,6 +45,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          OUT="$RUNNER_TEMP/fix"
+          echo "OUT=$OUT" >> "$GITHUB_ENV"
           mkdir -p "$OUT"
           gh issue view "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --json number,title,body > "$OUT/issue.json"
 
